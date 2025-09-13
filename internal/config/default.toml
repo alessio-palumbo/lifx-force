@@ -1,0 +1,30 @@
+[general]
+default_duration_ms = 1
+
+[logging]
+level = "info"
+file  = "lifx-force.log"   # leave empty for stdout
+
+[[gesture_bindings]]
+gesture = "swipe_left"
+action  = "set_color"
+[gesture_bindings.selector]
+type = "all"
+[gesture_bindings.hsbk]
+hue = 240
+saturation = 100
+brightness = 100
+
+[[gesture_bindings]]
+gesture = "swipe_right"
+action  = "set_color"
+[gesture_bindings.selector]
+type = "all"
+[gesture_bindings.hsbk]
+hue = 0
+saturation = 100
+brightness = 100
+
+[[finger_bindings]]
+pattern = [1,1,1,1,1]
+action  = "turn_on"
