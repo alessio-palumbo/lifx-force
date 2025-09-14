@@ -1,0 +1,82 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        goos: [linux, darwin, windows]
+        goarch: [amd64, arm64]
+        exclude:
+          - goos: windows
+            goarch: arm64
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout lifx-force
+        uses: actions/checkout@v4
+
+      - name: Get fingertrack version from Go code
+        run: |
+          FTVERSION=$(grep -oP 'FingertrackVersion = "\K[^"]+' internal/runtime/version.go)
+          echo "FINGERTRACK_VERSION=$FTVERSION" >> $GITHUB_ENV
+
+      - name: Download Fingertrack onedir zip
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: alessio-palumbo/fingertrack
+          tag: ${{ env.FINGERTRACK_VERSION }}
+          # Construct the release asset name based on GOOS/GOARCH
+          filename: ${{ format(
+            'fingertrack-{0}-onedir.zip',
+            matrix.goos == 'darwin'  && (matrix.goarch == 'amd64' && 'darwin-amd64' || 'darwin-arm64') ||
+            matrix.goos == 'linux'   && (matrix.goarch == 'amd64' && 'linux-amd64'  || 'linux-arm64')  ||
+            matrix.goos == 'windows' && 'windows-amd64',
+            '') }}
+          out-file-path: internal/runtime/assets/fingertrack.zip
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+
+      - name: Build lifx-force
+        run: |
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o dist/lifx-force-${{ matrix.goos }}-${{ matrix.goarch }} ./cmd/lifx-force
+
+      - name: Upload Go artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lifx-force-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist/*.zip
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all zipped artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Create GitHub Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          files: dist/*.zip
+
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
