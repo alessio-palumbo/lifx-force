@@ -2,6 +2,7 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -31,12 +32,12 @@ type Config struct {
 }
 
 type general struct {
-	DefaultDurationMs int `toml:"default_duration_ms"`
+	DefaultDurationMs *int `toml:"default_duration_ms"`
 }
 
 type logging struct {
-	Level string `toml:"level"`
-	File  string `toml:"file"`
+	Level *string `toml:"level"`
+	File  *string `toml:"file"`
 }
 
 type GestureBinding struct {
@@ -65,22 +66,23 @@ type HSBK struct {
 	Kelvin     *uint16 `toml:"kelvin"`
 }
 
-func LoadConfig() (*Config, error) {
-	userCfg, err := loadUserConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	return loadConfig(userCfg)
-}
-
-func loadConfig(userCfg *Config) (*Config, error) {
+func LoadConfig(userConfigPath string) (*Config, error) {
 	baseCfg := &Config{}
 	if err := toml.Unmarshal(defaultConfigData, baseCfg); err != nil {
 		return nil, err
 	}
-	if userCfg == nil {
+
+	// Create user config based on the default file, if it does not exists.
+	if _, err := os.Stat(userConfigPath); errors.Is(err, os.ErrNotExist) {
+		if err := createUserConfig(baseCfg, userConfigPath); err != nil {
+			return nil, err
+		}
 		return baseCfg, nil
+	}
+
+	userCfg, err := readConfigFile(userConfigPath)
+	if err != nil {
+		return nil, err
 	}
 
 	if err := merge(baseCfg, userCfg); err != nil {
@@ -89,23 +91,21 @@ func loadConfig(userCfg *Config) (*Config, error) {
 	return baseCfg, nil
 }
 
-// loadUserConfig loads the user config if it exists.
-func loadUserConfig() (*Config, error) {
-	homeDir, err := os.UserHomeDir()
+// createUserConfig creates the user config based on the default config.
+func createUserConfig(baseCfg *Config, userConfigPath string) error {
+	buf, err := toml.Marshal(baseCfg)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("failed to marshal defaults: %w", err)
 	}
 
-	userConfigPath := filepath.Join(homeDir, ".lifx-force", "config.toml")
-	cfg, err := readConfigFile(userConfigPath)
-	if err != nil {
-		// Do not error if user config is not supplied.
-		if errors.Is(err, os.ErrNotExist) {
-			return nil, nil
-		}
-		return nil, err
+	if err := os.MkdirAll(filepath.Dir(userConfigPath), 0755); err != nil {
+		return err
 	}
-	return cfg, nil
+	if err := os.WriteFile(userConfigPath, buf, 0644); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func readConfigFile(configPath string) (*Config, error) {
@@ -148,6 +148,12 @@ func merge(base, user any) error {
 		}
 
 		switch bf.Kind() {
+		case reflect.Int:
+			bf.Set(uf)
+		case reflect.String:
+			if uf.Len() > 0 {
+				bf.Set(uf)
+			}
 		case reflect.Ptr:
 			if !uf.IsNil() {
 				bf.Set(uf)

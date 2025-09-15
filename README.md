@@ -29,6 +29,68 @@ cd lifx-force-linux-amd64
 ./lifx-force
 ```
 
+## Configuration
+
+On the first run, lifx-force automatically creates a default configuration file at:
+~/.lifx-force/config.toml
+
+This file contains default values which you can edit to customize the behavior of the app.
+
+Example Configuration
+
+```yaml
+[general]
+default_duration_ms = 1
+
+[logging]
+level = "info"
+file  = "lifx-force.log"   # leave empty for stdout
+
+[[gesture_bindings]]
+gesture = "swipe_left"
+action  = "set_color"
+[gesture_bindings.selector]
+type = "serial"
+id = "d073d5000000"
+[gesture_bindings.hsbk]
+hue = 240
+saturation = 100
+brightness = 100
+
+[[gesture_bindings]]
+gesture = "swipe_right"
+action  = "set_color"
+[gesture_bindings.selector]
+type = "serial"
+id = "d073d5000000"
+[gesture_bindings.hsbk]
+hue = 0
+saturation = 100
+brightness = 100
+
+[[finger_bindings]]
+pattern = [1,1,1,1,1]
+action  = "turn_on"
+[finger_bindings.selector]
+type = "all"
+
+[[finger_bindings]]
+pattern = [0,0,0,0,0]
+action  = "turn_off"
+[finger_bindings.selector]
+type = "all"
+```
+
+### Sections
+
+- [general]: Global settings.
+- [logging]: Controls the logging level and output file. Leave file empty for console output.
+- [[gesture_bindings]]: Map gestures detected by Fingertrack to actions on your devices.
+- [[finger_bindings]]: Map finger patterns to actions.
+
+Each gesture or finger binding should include a selector to target a specific device or group, and optional parameters like hsbk for color control.
+By default the selector type will target "all" devices.
+
 ## License
 
 MIT

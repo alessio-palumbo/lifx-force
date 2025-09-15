@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -25,9 +26,13 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	cfg, err := config.LoadConfig()
+	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed to load homedir:", err)
+	}
+	cfg, err := config.LoadConfig(filepath.Join(homeDir, ".lifx-force", "config.toml"))
+	if err != nil {
+		log.Fatal("Failed to load config file:", err)
 	}
 
 	logger := logger.SetupLogger(cfg)
@@ -38,24 +43,26 @@ func main() {
 		log.Fatal(err)
 	}
 
+	logger.Info("Initializing LIFX LAN Controller")
+
 	ctrl, err := controller.New(controller.WithHFStateRefreshPeriod(time.Second))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed to initialize lifxlan-go controller:", err)
 	}
 	defer ctrl.Close()
 
-	time.Sleep(2 * time.Second)
-
 	cmd := exec.CommandContext(ctx, exePath)
 	cmd.Cancel = func() error {
-		logger.Info("Terminating fingertrack")
+		logger.Info("Process cancelled: terminating fingertrack")
 		return cmd.Process.Signal(syscall.SIGTERM)
 	}
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed to create stdout pipe:", err)
 	}
 	cmd.Stderr = os.Stderr
+
+	logger.Info("Starting Fingertrack program")
 
 	if err := cmd.Start(); err != nil {
 		log.Fatal("Failed to start fingertrack:", err)
@@ -85,7 +92,6 @@ func main() {
 	stop()
 	done := make(chan struct{})
 	go func() {
-		// wait for fingertrack to exit
 		cmd.Wait()
 		close(done)
 	}()
