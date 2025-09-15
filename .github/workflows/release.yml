@@ -48,9 +48,39 @@ jobs:
         with:
           go-version: "1.25"
 
-      - name: Build lifx-force
+      - name: Set build variables
+        id: vars
         run: |
-          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o dist/lifx-force-${{ matrix.goos }}-${{ matrix.goarch }} ./cmd/lifx-force
+          echo "VERSION=$(git describe --tags --always || echo dev)" >> $GITHUB_ENV
+          echo "COMMIT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_ENV
+
+      - name: Build and package binary
+        run: |
+          mkdir -p dist
+          BIN_NAME="lifx-force"
+          if [ "${{ matrix.goos }}" == "windows" ]; then BIN_NAME="$BIN_NAME.exe"; fi
+
+          FOLDER_NAME="lifx-force-${{ matrix.goos }}-${{ matrix.goarch }}"
+          OUTPUT_DIR="dist/$FOLDER_NAME"
+
+          mkdir -p "$OUTPUT_DIR"
+          echo "Building for ${{ matrix.goos }} ${{ matrix.goarch }} in "$OUTPUT_DIR/$BIN_NAME""
+
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} \
+          go build -o "$OUTPUT_DIR/$BIN_NAME" \
+            -ldflags "-s -w \
+              -X github.com/alessio-palumbo/hikari/cmd/hikari/internal/version.Version=$VERSION \
+              -X github.com/alessio-palumbo/hikari/cmd/hikari/internal/version.Commit=$COMMIT \
+              -X github.com/alessio-palumbo/hikari/cmd/hikari/internal/version.BuildTime=$BUILD_TIME" \
+            ./cmd/lifx-force
+
+          echo "$VERSION" > "$OUTPUT_DIR/VERSION"
+          cp README.md LICENSE "$OUTPUT_DIR/"
+
+          cd dist
+          zip -r "$FOLDER_NAME.zip" "$FOLDER_NAME"
+          cd ..
 
       - name: Upload Go artifacts
         uses: actions/upload-artifact@v4
