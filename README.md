@@ -34,16 +34,16 @@ cd lifx-force-linux-amd64
 On the first run, lifx-force automatically creates a default configuration file at:
 ~/.lifx-force/config.toml
 
-This file contains default values which you can edit to customize the behavior of the app.
+This file contains basic default values which you can edit to customize the behavior of the app.
 
 Example Configuration
 
 ```yaml
 [general]
-default_duration_ms = 1
+transition_ms = 1          # defines the speed of the light transition defined by the action (min 1ms)
 
 [logging]
-level = "info"
+level = "info"             # one of: debug, info, warn, error
 file  = "lifx-force.log"   # leave empty for stdout
 
 [[gesture_bindings]]
@@ -88,8 +88,24 @@ type = "all"
 - [[gesture_bindings]]: Map gestures detected by Fingertrack to actions on your devices.
 - [[finger_bindings]]: Map finger patterns to actions.
 
+### Selector
+
 Each gesture or finger binding should include a selector to target a specific device or group, and optional parameters like hsbk for color control.
-By default the selector type will target "all" devices.
+The accepted selector are:
+
+- all -> target all the discovered devices
+- label -> target a single device by label
+- group -> target devices with the given group label
+- location -> target devices with the given location label
+- serial -> target a device with the given serial (e.g., d073d5000000)
+
+### Action
+
+Supported actions are:
+
+- power_on
+- power_off
+- set_color -> requires at least one of the HSBK (Hue, Saturation, Brightness, Kelvin) to be set
 
 ## License
 

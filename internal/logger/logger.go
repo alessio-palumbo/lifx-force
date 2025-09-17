@@ -14,7 +14,7 @@ func SetupLogger(cfg *config.Config) *slog.Logger {
 	var handler slog.Handler
 	level := slog.LevelInfo
 
-	switch *cfg.Logging.Level {
+	switch cfg.Logging.Level {
 	case "debug":
 		level = slog.LevelDebug
 	case "warn":
@@ -23,8 +23,8 @@ func SetupLogger(cfg *config.Config) *slog.Logger {
 		level = slog.LevelError
 	}
 
-	if *cfg.Logging.File != "" {
-		f, err := os.OpenFile(*cfg.Logging.File, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if cfg.Logging.File != "" {
+		f, err := os.OpenFile(cfg.Logging.File, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 		if err != nil {
 			log.Fatalf("failed to open log file: %v", err)
 		}

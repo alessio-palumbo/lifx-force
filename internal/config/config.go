@@ -8,73 +8,110 @@ import (
 	"reflect"
 
 	"github.com/BurntSushi/toml"
+	"github.com/alessio-palumbo/lifxlan-go/pkg/device"
 
 	_ "embed"
 )
 
-//go:embed default.toml
-var defaultConfigData []byte
+const (
+	defaultTransitionMs = 1
+)
+
+type FingerPattern [5]int
+
+type Gesture string
+
+const (
+	GestureSwipeLeft  Gesture = "swipe_left"
+	GestureSwipeRight Gesture = "swipe_right"
+)
+
+type Action string
+
+const (
+	ActionPowerOn       Action = "power_on"
+	ActionPowerOff      Action = "power_off"
+	ActionPowerSetColor Action = "set_color"
+)
 
 type SelectorType string
 
 const (
-	SelectorTypeAll    SelectorType = "all"
-	SelectorTypeSerial SelectorType = "serial"
+	SelectorTypeAll      SelectorType = "all"
+	SelectorTypeLabel    SelectorType = "label"
+	SelectorTypeGroup    SelectorType = "group"
+	SelectorTypeLocation SelectorType = "location"
+	SelectorTypeSerial   SelectorType = "serial"
 )
 
 type Config struct {
-	General general `toml:"general"`
+	General General `toml:"general"`
 
-	Logging logging `toml:"logging"`
+	Logging Logging `toml:"logging"`
 
 	GestureBindings []GestureBinding `toml:"gesture_bindings"`
 	FingerBindings  []FingerBinding  `toml:"finger_bindings"`
 }
 
-type general struct {
-	DefaultDurationMs *int `toml:"default_duration_ms"`
+type General struct {
+	TransitionMs int `toml:"transition_ms"`
 }
 
-type logging struct {
-	Level *string `toml:"level"`
-	File  *string `toml:"file"`
+type Logging struct {
+	Level string `toml:"level"`
+	File  string `toml:"file"`
 }
 
 type GestureBinding struct {
-	Gesture  string   `toml:"gesture"`
-	Action   string   `toml:"action"`
+	Gesture  Gesture  `toml:"gesture"`
+	Action   Action   `toml:"action"`
 	Selector Selector `toml:"selector"`
 	HSBK     *HSBK    `toml:"hsbk,omitempty"`
 }
 
 type FingerBinding struct {
-	Pattern  []int    `toml:"pattern"`
-	Action   string   `toml:"action"`
-	Selector Selector `toml:"selector"`
-	HSBK     *HSBK    `toml:"hsbk,omitempty"`
-}
-
-type Selector struct {
-	Type SelectorType
-	ID   string
+	Pattern  FingerPattern `toml:"pattern"`
+	Action   Action        `toml:"action"`
+	Selector Selector      `toml:"selector"`
+	HSBK     *HSBK         `toml:"hsbk,omitempty"`
 }
 
 type HSBK struct {
-	Hue        *uint16 `toml:"hue"`
-	Saturation *uint16 `toml:"saturation"`
-	Brightness *uint16 `toml:"brightness"`
-	Kelvin     *uint16 `toml:"kelvin"`
+	Hue        *float64 `toml:"hue"`
+	Saturation *float64 `toml:"saturation"`
+	Brightness *float64 `toml:"brightness"`
+	Kelvin     *uint16  `toml:"kelvin"`
+}
+
+type Selector struct {
+	Type  SelectorType `toml:"type"`
+	Value string       `toml:"value,omitempty"`
+	// Serial is set on unmarshalling when type is SelectorTypeSerial
+	Serial device.Serial `toml:"-"`
+}
+
+func (g *General) UnmarshalTOML(data any) error {
+	m, ok := data.(map[string]any)
+	if !ok {
+		return fmt.Errorf("invalid General format")
+	}
+
+	if t, ok := m["transition_ms"].(int64); !ok {
+		return fmt.Errorf("selector.type must be an %v", m)
+	} else if t > 0 {
+		g.TransitionMs = int(t)
+	} else {
+		g.TransitionMs = defaultTransitionMs
+	}
+	return nil
 }
 
 func LoadConfig(userConfigPath string) (*Config, error) {
-	baseCfg := &Config{}
-	if err := toml.Unmarshal(defaultConfigData, baseCfg); err != nil {
-		return nil, err
-	}
+	baseCfg := newBaseConfig()
 
 	// Create user config based on the default file, if it does not exists.
 	if _, err := os.Stat(userConfigPath); errors.Is(err, os.ErrNotExist) {
-		if err := createUserConfig(baseCfg, userConfigPath); err != nil {
+		if err := createConfigFile(baseCfg, userConfigPath); err != nil {
 			return nil, err
 		}
 		return baseCfg, nil
@@ -88,20 +125,30 @@ func LoadConfig(userConfigPath string) (*Config, error) {
 	if err := merge(baseCfg, userCfg); err != nil {
 		return nil, err
 	}
+
+	if err := baseCfg.Validate(); err != nil {
+		return nil, err
+	}
 	return baseCfg, nil
 }
 
-// createUserConfig creates the user config based on the default config.
-func createUserConfig(baseCfg *Config, userConfigPath string) error {
-	buf, err := toml.Marshal(baseCfg)
+func newBaseConfig() *Config {
+	return &Config{
+		General: General{TransitionMs: defaultTransitionMs},
+		Logging: Logging{Level: "info"},
+	}
+}
+
+func createConfigFile(cfg *Config, path string) error {
+	buf, err := toml.Marshal(cfg)
 	if err != nil {
 		return fmt.Errorf("failed to marshal defaults: %w", err)
 	}
 
-	if err := os.MkdirAll(filepath.Dir(userConfigPath), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
-	if err := os.WriteFile(userConfigPath, buf, 0644); err != nil {
+	if err := os.WriteFile(path, buf, 0644); err != nil {
 		return err
 	}
 
@@ -126,6 +173,9 @@ func readConfigFile(configPath string) (*Config, error) {
 func merge(base, user any) error {
 	baseVal := reflect.ValueOf(base)
 	userVal := reflect.ValueOf(user)
+	if userVal.IsZero() {
+		return nil
+	}
 
 	if baseVal.Kind() != reflect.Ptr || userVal.Kind() != reflect.Ptr {
 		return &reflect.ValueError{Method: "Merge", Kind: baseVal.Kind()}
