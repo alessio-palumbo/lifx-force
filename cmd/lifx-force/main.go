@@ -68,7 +68,8 @@ func main() {
 		log.Fatal("Failed to start fingertrack:", err)
 	}
 
-	c := consumer.New(cfg, ctrl)
+	logger.Info("Starting consumer")
+	c := consumer.New(cfg, ctrl, logger)
 
 	go func() {
 		scanner := bufio.NewScanner(stdout)

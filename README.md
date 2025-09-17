@@ -51,7 +51,7 @@ gesture = "swipe_left"
 action  = "set_color"
 [gesture_bindings.selector]
 type = "serial"
-id = "d073d5000000"
+value = "d073d5000000"
 [gesture_bindings.hsbk]
 hue = 240
 saturation = 100
@@ -62,7 +62,7 @@ gesture = "swipe_right"
 action  = "set_color"
 [gesture_bindings.selector]
 type = "serial"
-id = "d073d5000000"
+value = "d073d5000000"
 [gesture_bindings.hsbk]
 hue = 0
 saturation = 100
@@ -70,13 +70,13 @@ brightness = 100
 
 [[finger_bindings]]
 pattern = [1,1,1,1,1]
-action  = "turn_on"
+action  = "power_on"
 [finger_bindings.selector]
 type = "all"
 
 [[finger_bindings]]
 pattern = [0,0,0,0,0]
-action  = "turn_off"
+action  = "power_off"
 [finger_bindings.selector]
 type = "all"
 ```
