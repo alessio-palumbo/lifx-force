@@ -1,4 +1,4 @@
 package runtime
 
 // FingertrackVersion declares the required fingertrack release.
-const FingertrackVersion = "v0.3.0"
+const FingertrackVersion = "v0.3.1"
