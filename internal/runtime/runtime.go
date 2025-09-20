@@ -3,19 +3,23 @@ package runtime
 import (
 	"archive/zip"
 	"bytes"
+	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
 
 	_ "embed"
+
+	"github.com/alessio-palumbo/lifx-force/internal/config"
 )
 
 //go:embed assets/fingertrack.zip
 var fingertrackZip []byte
 
 // EnsureFingertrackInstalled makes sure the correct version is extracted.
-func EnsureFingertrackInstalled() (string, error) {
+func EnsureFingertrackInstalled(logger *slog.Logger) (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
@@ -27,10 +31,18 @@ func EnsureFingertrackInstalled() (string, error) {
 
 	// Check installed version matches current otherwise replace.
 	if data, err := os.ReadFile(versionFile); err == nil {
-		if strings.TrimSpace(string(data)) == FingertrackVersion {
+		currentVersion := strings.TrimSpace(string(data))
+		if currentVersion == FingertrackVersion {
+			logger.Debug("Fingertrack version match requirements", slog.String("current_version", currentVersion))
 			return ftPath, nil
 		}
+		logger.Debug("Fingertrack version does not match requirements",
+			slog.String("current_version", currentVersion),
+			slog.String("required_version", FingertrackVersion),
+		)
 	}
+
+	logger.Info("Unzipping Fingertrack", slog.String("version", FingertrackVersion))
 
 	if err := unzip(bytes.NewReader(fingertrackZip), int64(len(fingertrackZip)), baseDir); err != nil {
 		return "", err
@@ -41,6 +53,15 @@ func EnsureFingertrackInstalled() (string, error) {
 	}
 
 	return ftPath, nil
+}
+
+// ArgsFromConfig parses the given Config and returns a list of Fingertrack's arguments.
+func ArgsFromConfig(cfg *config.Config) []string {
+	return []string{
+		"--frame-skip", fmt.Sprintf("%d", cfg.Tracking.FrameSkip),
+		"--buffer-size", fmt.Sprintf("%d", cfg.Tracking.BufferSize),
+		"--gesture-threshold", fmt.Sprintf("%.1f", cfg.Tracking.GestureThreshold),
+	}
 }
 
 func unzip(data io.ReaderAt, size int64, dest string) error {

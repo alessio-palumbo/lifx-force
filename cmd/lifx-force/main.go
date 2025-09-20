@@ -38,7 +38,7 @@ func main() {
 	logger := logger.SetupLogger(cfg)
 	logger.Info("Starting lifx-force")
 
-	exePath, err := runtime.EnsureFingertrackInstalled()
+	exePath, err := runtime.EnsureFingertrackInstalled(logger)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -51,7 +51,7 @@ func main() {
 	}
 	defer ctrl.Close()
 
-	cmd := exec.CommandContext(ctx, exePath)
+	cmd := exec.CommandContext(ctx, exePath, runtime.ArgsFromConfig(cfg)...)
 	cmd.Cancel = func() error {
 		logger.Info("Process cancelled: terminating fingertrack")
 		return cmd.Process.Signal(syscall.SIGTERM)

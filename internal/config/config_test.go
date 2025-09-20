@@ -19,8 +19,9 @@ func TestLoadConfig(t *testing.T) {
 		p0        float64 = 100
 		defaultMs         = 1
 		userCfg0          = &Config{
-			General: General{TransitionMs: 10},
-			Logging: Logging{Level: "info", File: "lifx-force.log"},
+			General:  General{TransitionMs: 10},
+			Logging:  Logging{Level: "info", File: "lifx-force.log"},
+			Tracking: Tracking{FrameSkip: 1, BufferSize: 8, GestureThreshold: 0.3},
 			GestureBindings: []GestureBinding{
 				{
 					Gesture:  "swipe_left",
@@ -65,8 +66,9 @@ func TestLoadConfig(t *testing.T) {
 		"no user config": {
 			userConfigPath: tempFilePathEmpty,
 			want: &Config{
-				General: General{TransitionMs: defaultMs},
-				Logging: Logging{Level: "info"},
+				General:  General{TransitionMs: defaultMs},
+				Logging:  Logging{Level: "info"},
+				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
 			},
 		},
 		"with user config": {
@@ -83,4 +85,17 @@ func TestLoadConfig(t *testing.T) {
 			assert.FileExists(t, tc.userConfigPath)
 		})
 	}
+
+	// Unhappy Path
+	userCfg1 := userCfg0
+	userCfg1.General.TransitionMs = -1
+	tempFilePathEditedInvalid := filepath.Join(tempDir, "config-edited-invalid.toml")
+
+	if err := createConfigFile(userCfg1, tempFilePathEditedInvalid); err != nil {
+		t.Fatal(err)
+	}
+	got, err := LoadConfig(tempFilePathEditedInvalid)
+	assert.Error(t, err)
+	assert.Nil(t, got)
+	assert.FileExists(t, tempFilePathEditedInvalid)
 }

@@ -17,6 +17,10 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("logging.level must be one of debug, info, warn, error")
 	}
 
+	if err := c.Tracking.Validate(); err != nil {
+		return err
+	}
+
 	for i := range c.GestureBindings {
 		g := &c.GestureBindings[i]
 		if err := g.Validate(); err != nil {
@@ -31,6 +35,21 @@ func (c *Config) Validate() error {
 		}
 	}
 
+	return nil
+}
+
+func (t *Tracking) Validate() error {
+	if t.FrameSkip <= 0 {
+		return fmt.Errorf("tracking.frame_skip must be > 0")
+	}
+	if t.BufferSize <= 0 {
+		return fmt.Errorf("tracking.buffer_size must be > 0")
+	}
+	if t.GestureThreshold <= 0 {
+		return fmt.Errorf("tracking.gesture_threshold must be > 0.0")
+	} else if t.GestureThreshold > 1 {
+		return fmt.Errorf("tracking.gesture_threshold must be <= 1.0")
+	}
 	return nil
 }
 

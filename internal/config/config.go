@@ -15,6 +15,12 @@ import (
 
 const (
 	defaultTransitionMs = 1
+
+	defaultLogLevel = "info"
+
+	defaultFrameSkip        = 1
+	defaultBufferSize       = 5
+	defaultGestureThreshold = 0.1
 )
 
 type FingerPattern [5]int
@@ -45,9 +51,9 @@ const (
 )
 
 type Config struct {
-	General General `toml:"general"`
-
-	Logging Logging `toml:"logging"`
+	General  General  `toml:"general"`
+	Logging  Logging  `toml:"logging"`
+	Tracking Tracking `toml:"tracking"`
 
 	GestureBindings []GestureBinding `toml:"gesture_bindings"`
 	FingerBindings  []FingerBinding  `toml:"finger_bindings"`
@@ -55,6 +61,12 @@ type Config struct {
 
 type General struct {
 	TransitionMs int `toml:"transition_ms"`
+}
+
+type Tracking struct {
+	FrameSkip        int     `toml:"frame_skip"`
+	BufferSize       int     `toml:"buffer_size"`
+	GestureThreshold float64 `toml:"gesture_threshold"`
 }
 
 type Logging struct {
@@ -90,22 +102,6 @@ type Selector struct {
 	Serial device.Serial `toml:"-"`
 }
 
-func (g *General) UnmarshalTOML(data any) error {
-	m, ok := data.(map[string]any)
-	if !ok {
-		return fmt.Errorf("invalid General format")
-	}
-
-	if t, ok := m["transition_ms"].(int64); !ok {
-		return fmt.Errorf("selector.type must be an %v", m)
-	} else if t > 0 {
-		g.TransitionMs = int(t)
-	} else {
-		g.TransitionMs = defaultTransitionMs
-	}
-	return nil
-}
-
 func LoadConfig(userConfigPath string) (*Config, error) {
 	baseCfg := newBaseConfig()
 
@@ -135,7 +131,12 @@ func LoadConfig(userConfigPath string) (*Config, error) {
 func newBaseConfig() *Config {
 	return &Config{
 		General: General{TransitionMs: defaultTransitionMs},
-		Logging: Logging{Level: "info"},
+		Logging: Logging{Level: defaultLogLevel},
+		Tracking: Tracking{
+			FrameSkip:        defaultFrameSkip,
+			BufferSize:       defaultBufferSize,
+			GestureThreshold: defaultGestureThreshold,
+		},
 	}
 }
 
@@ -198,8 +199,10 @@ func merge(base, user any) error {
 		}
 
 		switch bf.Kind() {
-		case reflect.Int:
-			bf.Set(uf)
+		case reflect.Int, reflect.Float64:
+			if !uf.IsZero() {
+				bf.Set(uf)
+			}
 		case reflect.String:
 			if uf.Len() > 0 {
 				bf.Set(uf)

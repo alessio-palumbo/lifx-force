@@ -29,10 +29,43 @@ func TestValidate(t *testing.T) {
 			},
 			wantErr: "logging.level must be one of debug, info, warn, error",
 		},
+		"invalid tracking: frame_skip": {
+			cfg: &Config{
+				General:  General{TransitionMs: 1},
+				Logging:  Logging{Level: "info"},
+				Tracking: Tracking{FrameSkip: 0},
+			},
+			wantErr: "tracking.frame_skip must be > 0",
+		},
+		"invalid tracking: buffer_size": {
+			cfg: &Config{
+				General:  General{TransitionMs: 1},
+				Logging:  Logging{Level: "info"},
+				Tracking: Tracking{FrameSkip: 1, BufferSize: -1},
+			},
+			wantErr: "tracking.buffer_size must be > 0",
+		},
+		"invalid tracking: gesture_threshold - too small": {
+			cfg: &Config{
+				General:  General{TransitionMs: 1},
+				Logging:  Logging{Level: "info"},
+				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0},
+			},
+			wantErr: "tracking.gesture_threshold must be > 0.0",
+		},
+		"invalid tracking: gesture_threshold - too large": {
+			cfg: &Config{
+				General:  General{TransitionMs: 1},
+				Logging:  Logging{Level: "info"},
+				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 1.2},
+			},
+			wantErr: "tracking.gesture_threshold must be <= 1.0",
+		},
 		"invalid gesture binding: gesture": {
 			cfg: &Config{
-				General: General{TransitionMs: 1},
-				Logging: Logging{Level: "info"},
+				General:  General{TransitionMs: 1},
+				Logging:  Logging{Level: "info"},
+				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
 				GestureBindings: []GestureBinding{
 					{Gesture: "swoop"},
 				},
@@ -41,8 +74,9 @@ func TestValidate(t *testing.T) {
 		},
 		"invalid gesture binding: selector": {
 			cfg: &Config{
-				General: General{TransitionMs: 1},
-				Logging: Logging{Level: "info"},
+				General:  General{TransitionMs: 1},
+				Logging:  Logging{Level: "info"},
+				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
 				GestureBindings: []GestureBinding{
 					{Gesture: "swipe_left", Selector: Selector{Type: "serial"}},
 				},
@@ -51,8 +85,9 @@ func TestValidate(t *testing.T) {
 		},
 		"invalid gesture binding: action required": {
 			cfg: &Config{
-				General: General{TransitionMs: 1},
-				Logging: Logging{Level: "info"},
+				General:  General{TransitionMs: 1},
+				Logging:  Logging{Level: "info"},
+				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
 				GestureBindings: []GestureBinding{
 					{Gesture: "swipe_left", Selector: Selector{Type: "all"}},
 				},
@@ -61,8 +96,9 @@ func TestValidate(t *testing.T) {
 		},
 		"invalid gesture binding: invalid action": {
 			cfg: &Config{
-				General: General{TransitionMs: 1},
-				Logging: Logging{Level: "info"},
+				General:  General{TransitionMs: 1},
+				Logging:  Logging{Level: "info"},
+				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
 				GestureBindings: []GestureBinding{
 					{Gesture: "swipe_left", Selector: Selector{Type: "all"}, Action: "Unknown"},
 				},
@@ -71,8 +107,9 @@ func TestValidate(t *testing.T) {
 		},
 		"invalid gesture binding: action missing args": {
 			cfg: &Config{
-				General: General{TransitionMs: 1},
-				Logging: Logging{Level: "info"},
+				General:  General{TransitionMs: 1},
+				Logging:  Logging{Level: "info"},
+				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
 				GestureBindings: []GestureBinding{
 					{Gesture: "swipe_left", Selector: Selector{Type: "all"}, Action: ActionPowerSetColor},
 				},
@@ -81,8 +118,9 @@ func TestValidate(t *testing.T) {
 		},
 		"invalid gesture binding: emtpy HSBK for action": {
 			cfg: &Config{
-				General: General{TransitionMs: 1},
-				Logging: Logging{Level: "info"},
+				General:  General{TransitionMs: 1},
+				Logging:  Logging{Level: "info"},
+				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
 				GestureBindings: []GestureBinding{
 					{Gesture: "swipe_left", Selector: Selector{Type: "all"}, Action: ActionPowerSetColor, HSBK: &HSBK{}},
 				},
@@ -91,8 +129,9 @@ func TestValidate(t *testing.T) {
 		},
 		"invalid finger binding: fingers": {
 			cfg: &Config{
-				General: General{TransitionMs: 1},
-				Logging: Logging{Level: "info"},
+				General:  General{TransitionMs: 1},
+				Logging:  Logging{Level: "info"},
+				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
 				FingerBindings: []FingerBinding{
 					{Pattern: [5]int{1, 2, 3, 4, 5}},
 				},
@@ -101,8 +140,9 @@ func TestValidate(t *testing.T) {
 		},
 		"invalid finger binding: selector": {
 			cfg: &Config{
-				General: General{TransitionMs: 1},
-				Logging: Logging{Level: "info"},
+				General:  General{TransitionMs: 1},
+				Logging:  Logging{Level: "info"},
+				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
 				FingerBindings: []FingerBinding{
 					{Pattern: [5]int{0, 0, 0, 0, 0}, Selector: Selector{Type: "serial"}},
 				},
@@ -111,8 +151,9 @@ func TestValidate(t *testing.T) {
 		},
 		"invalid finger binding: action required": {
 			cfg: &Config{
-				General: General{TransitionMs: 1},
-				Logging: Logging{Level: "info"},
+				General:  General{TransitionMs: 1},
+				Logging:  Logging{Level: "info"},
+				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
 				FingerBindings: []FingerBinding{
 					{Pattern: [5]int{0, 0, 0, 0, 0}, Selector: Selector{Type: "all"}},
 				},
@@ -121,8 +162,9 @@ func TestValidate(t *testing.T) {
 		},
 		"invalid finger binding: invalid action": {
 			cfg: &Config{
-				General: General{TransitionMs: 1},
-				Logging: Logging{Level: "info"},
+				General:  General{TransitionMs: 1},
+				Logging:  Logging{Level: "info"},
+				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
 				FingerBindings: []FingerBinding{
 					{Pattern: [5]int{0, 0, 0, 0, 0}, Selector: Selector{Type: "all"}, Action: "Unknown"},
 				},
@@ -131,8 +173,9 @@ func TestValidate(t *testing.T) {
 		},
 		"invalid finger binding: action missing args": {
 			cfg: &Config{
-				General: General{TransitionMs: 1},
-				Logging: Logging{Level: "info"},
+				General:  General{TransitionMs: 1},
+				Logging:  Logging{Level: "info"},
+				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
 				FingerBindings: []FingerBinding{
 					{Pattern: [5]int{0, 0, 0, 0, 0}, Selector: Selector{Type: "all"}, Action: ActionPowerSetColor},
 				},
@@ -141,8 +184,9 @@ func TestValidate(t *testing.T) {
 		},
 		"invalid finger binding: emtpy HSBK for action": {
 			cfg: &Config{
-				General: General{TransitionMs: 1},
-				Logging: Logging{Level: "info"},
+				General:  General{TransitionMs: 1},
+				Logging:  Logging{Level: "info"},
+				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
 				FingerBindings: []FingerBinding{
 					{Pattern: [5]int{0, 0, 0, 0, 0}, Selector: Selector{Type: "all"}, Action: ActionPowerSetColor, HSBK: &HSBK{}},
 				},
@@ -158,8 +202,9 @@ func TestValidate(t *testing.T) {
 	}
 
 	cfg0 := &Config{
-		General: General{TransitionMs: 1},
-		Logging: Logging{Level: "info"},
+		General:  General{TransitionMs: 1},
+		Logging:  Logging{Level: "info"},
+		Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
 		GestureBindings: []GestureBinding{
 			{Gesture: "swipe_left", Selector: Selector{Type: "all"}, Action: ActionPowerOff},
 		},
