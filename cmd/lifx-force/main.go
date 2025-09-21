@@ -51,6 +51,10 @@ func main() {
 	}
 	defer ctrl.Close()
 
+	// Allow discovery to occur so that Labels and Groups are available to consumer.
+	// TODO Add some logic to periodically refresh the list of devices inside the consumer.
+	time.Sleep(2 * time.Second)
+
 	cmd := exec.CommandContext(ctx, exePath, runtime.ArgsFromConfig(cfg)...)
 	cmd.Cancel = func() error {
 		logger.Info("Process cancelled: terminating fingertrack")
