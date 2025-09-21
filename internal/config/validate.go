@@ -21,17 +21,10 @@ func (c *Config) Validate() error {
 		return err
 	}
 
-	for i := range c.GestureBindings {
-		g := &c.GestureBindings[i]
-		if err := g.Validate(); err != nil {
-			return fmt.Errorf("gesture_bindings[%d]: %w", i, err)
-		}
-	}
-
-	for i := range c.FingerBindings {
-		fb := &c.FingerBindings[i]
-		if err := fb.Validate(); err != nil {
-			return fmt.Errorf("finger_bindings[%d]: %w", i, err)
+	for i := range c.Bindings {
+		b := &c.Bindings[i]
+		if err := b.Validate(); err != nil {
+			return fmt.Errorf("bindings[%d]: %w", i, err)
 		}
 	}
 
@@ -53,36 +46,26 @@ func (t *Tracking) Validate() error {
 	return nil
 }
 
-func (g *GestureBinding) Validate() error {
-	switch g.Gesture {
-	case GestureSwipeLeft, GestureSwipeRight:
-	case "":
-		return fmt.Errorf("gesture is required")
-	default:
-		return fmt.Errorf("invalid gesture: %s", g.Gesture)
+func (b *Binding) Validate() error {
+	if b.Gesture == "" && b.Pattern == nil {
+		return fmt.Errorf("one of gesture or pattern is required")
 	}
-
-	if err := g.Selector.Validate(); err != nil {
-		return err
-	}
-	if err := ValidateActionAndArgs(g.Action, g.HSBK); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (f *FingerBinding) Validate() error {
-	for _, p := range f.Pattern {
-		if p != 0 && p != 1 {
-			return fmt.Errorf("pattern should only contain 0s & 1s")
+	if b.Gesture != "" {
+		if _, ok := supportedGestures[b.Gesture]; !ok {
+			return fmt.Errorf("invalid gesture: %s", b.Gesture)
+		}
+	} else {
+		for _, p := range *b.Pattern {
+			if p != 0 && p != 1 {
+				return fmt.Errorf("pattern should only contain 0s & 1s")
+			}
 		}
 	}
 
-	if err := f.Selector.Validate(); err != nil {
+	if err := b.Selector.Validate(); err != nil {
 		return err
 	}
-	if err := ValidateActionAndArgs(f.Action, f.HSBK); err != nil {
+	if err := ValidateActionAndArgs(b.Action, b.HSBK); err != nil {
 		return err
 	}
 

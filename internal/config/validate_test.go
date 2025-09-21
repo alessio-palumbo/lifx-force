@@ -8,8 +8,10 @@ import (
 
 func TestValidate(t *testing.T) {
 	var (
-		h, s  float64 = 180, 100
-		hsbk0         = &HSBK{Hue: &h, Saturation: &s}
+		h, s           float64 = 180, 100
+		hsbk0                  = &HSBK{Hue: &h, Saturation: &s}
+		invalidPattern         = FingerPattern{1, 2, 3, 4, 5}
+		handClosed             = FingerPattern{0, 0, 0, 0, 0}
 	)
 
 	testCases := map[string]struct {
@@ -66,132 +68,132 @@ func TestValidate(t *testing.T) {
 				General:  General{TransitionMs: 1},
 				Logging:  Logging{Level: "info"},
 				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
-				GestureBindings: []GestureBinding{
+				Bindings: []Binding{
 					{Gesture: "swoop"},
 				},
 			},
-			wantErr: "gesture_bindings[0]: invalid gesture: swoop",
+			wantErr: "bindings[0]: invalid gesture: swoop",
 		},
 		"invalid gesture binding: selector": {
 			cfg: &Config{
 				General:  General{TransitionMs: 1},
 				Logging:  Logging{Level: "info"},
 				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
-				GestureBindings: []GestureBinding{
-					{Gesture: "swipe_left", Selector: Selector{Type: "serial"}},
+				Bindings: []Binding{
+					{Gesture: GestureSwipeLeft, Selector: Selector{Type: "serial"}},
 				},
 			},
-			wantErr: "gesture_bindings[0]: invalid serial value: expected 12 hex chars (6 bytes), got 0",
+			wantErr: "bindings[0]: invalid serial value: expected 12 hex chars (6 bytes), got 0",
 		},
 		"invalid gesture binding: action required": {
 			cfg: &Config{
 				General:  General{TransitionMs: 1},
 				Logging:  Logging{Level: "info"},
 				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
-				GestureBindings: []GestureBinding{
-					{Gesture: "swipe_left", Selector: Selector{Type: "all"}},
+				Bindings: []Binding{
+					{Gesture: GestureSwipeLeft, Selector: Selector{Type: "all"}},
 				},
 			},
-			wantErr: "gesture_bindings[0]: action is required",
+			wantErr: "bindings[0]: action is required",
 		},
 		"invalid gesture binding: invalid action": {
 			cfg: &Config{
 				General:  General{TransitionMs: 1},
 				Logging:  Logging{Level: "info"},
 				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
-				GestureBindings: []GestureBinding{
-					{Gesture: "swipe_left", Selector: Selector{Type: "all"}, Action: "Unknown"},
+				Bindings: []Binding{
+					{Gesture: GestureSwipeLeft, Selector: Selector{Type: "all"}, Action: "Unknown"},
 				},
 			},
-			wantErr: "gesture_bindings[0]: invalid action: Unknown",
+			wantErr: "bindings[0]: invalid action: Unknown",
 		},
 		"invalid gesture binding: action missing args": {
 			cfg: &Config{
 				General:  General{TransitionMs: 1},
 				Logging:  Logging{Level: "info"},
 				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
-				GestureBindings: []GestureBinding{
-					{Gesture: "swipe_left", Selector: Selector{Type: "all"}, Action: ActionPowerSetColor},
+				Bindings: []Binding{
+					{Gesture: GestureSwipeLeft, Selector: Selector{Type: "all"}, Action: ActionPowerSetColor},
 				},
 			},
-			wantErr: "gesture_bindings[0]: hsbk must be set for action set_color",
+			wantErr: "bindings[0]: hsbk must be set for action set_color",
 		},
 		"invalid gesture binding: emtpy HSBK for action": {
 			cfg: &Config{
 				General:  General{TransitionMs: 1},
 				Logging:  Logging{Level: "info"},
 				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
-				GestureBindings: []GestureBinding{
-					{Gesture: "swipe_left", Selector: Selector{Type: "all"}, Action: ActionPowerSetColor, HSBK: &HSBK{}},
+				Bindings: []Binding{
+					{Gesture: GestureSwipeLeft, Selector: Selector{Type: "all"}, Action: ActionPowerSetColor, HSBK: &HSBK{}},
 				},
 			},
-			wantErr: "gesture_bindings[0]: hsbk must be set for action set_color",
+			wantErr: "bindings[0]: hsbk must be set for action set_color",
 		},
 		"invalid finger binding: fingers": {
 			cfg: &Config{
 				General:  General{TransitionMs: 1},
 				Logging:  Logging{Level: "info"},
 				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
-				FingerBindings: []FingerBinding{
-					{Pattern: [5]int{1, 2, 3, 4, 5}},
+				Bindings: []Binding{
+					{Pattern: &invalidPattern},
 				},
 			},
-			wantErr: "finger_bindings[0]: pattern should only contain 0s & 1s",
+			wantErr: "bindings[0]: pattern should only contain 0s & 1s",
 		},
 		"invalid finger binding: selector": {
 			cfg: &Config{
 				General:  General{TransitionMs: 1},
 				Logging:  Logging{Level: "info"},
 				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
-				FingerBindings: []FingerBinding{
-					{Pattern: [5]int{0, 0, 0, 0, 0}, Selector: Selector{Type: "serial"}},
+				Bindings: []Binding{
+					{Pattern: &handClosed, Selector: Selector{Type: "serial"}},
 				},
 			},
-			wantErr: "finger_bindings[0]: invalid serial value: expected 12 hex chars (6 bytes), got 0",
+			wantErr: "bindings[0]: invalid serial value: expected 12 hex chars (6 bytes), got 0",
 		},
 		"invalid finger binding: action required": {
 			cfg: &Config{
 				General:  General{TransitionMs: 1},
 				Logging:  Logging{Level: "info"},
 				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
-				FingerBindings: []FingerBinding{
-					{Pattern: [5]int{0, 0, 0, 0, 0}, Selector: Selector{Type: "all"}},
+				Bindings: []Binding{
+					{Pattern: &handClosed, Selector: Selector{Type: "all"}},
 				},
 			},
-			wantErr: "finger_bindings[0]: action is required",
+			wantErr: "bindings[0]: action is required",
 		},
 		"invalid finger binding: invalid action": {
 			cfg: &Config{
 				General:  General{TransitionMs: 1},
 				Logging:  Logging{Level: "info"},
 				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
-				FingerBindings: []FingerBinding{
-					{Pattern: [5]int{0, 0, 0, 0, 0}, Selector: Selector{Type: "all"}, Action: "Unknown"},
+				Bindings: []Binding{
+					{Pattern: &handClosed, Selector: Selector{Type: "all"}, Action: "Unknown"},
 				},
 			},
-			wantErr: "finger_bindings[0]: invalid action: Unknown",
+			wantErr: "bindings[0]: invalid action: Unknown",
 		},
 		"invalid finger binding: action missing args": {
 			cfg: &Config{
 				General:  General{TransitionMs: 1},
 				Logging:  Logging{Level: "info"},
 				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
-				FingerBindings: []FingerBinding{
-					{Pattern: [5]int{0, 0, 0, 0, 0}, Selector: Selector{Type: "all"}, Action: ActionPowerSetColor},
+				Bindings: []Binding{
+					{Pattern: &handClosed, Selector: Selector{Type: "all"}, Action: ActionPowerSetColor},
 				},
 			},
-			wantErr: "finger_bindings[0]: hsbk must be set for action set_color",
+			wantErr: "bindings[0]: hsbk must be set for action set_color",
 		},
 		"invalid finger binding: emtpy HSBK for action": {
 			cfg: &Config{
 				General:  General{TransitionMs: 1},
 				Logging:  Logging{Level: "info"},
 				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
-				FingerBindings: []FingerBinding{
-					{Pattern: [5]int{0, 0, 0, 0, 0}, Selector: Selector{Type: "all"}, Action: ActionPowerSetColor, HSBK: &HSBK{}},
+				Bindings: []Binding{
+					{Pattern: &handClosed, Selector: Selector{Type: "all"}, Action: ActionPowerSetColor, HSBK: &HSBK{}},
 				},
 			},
-			wantErr: "finger_bindings[0]: hsbk must be set for action set_color",
+			wantErr: "bindings[0]: hsbk must be set for action set_color",
 		},
 	}
 
@@ -205,11 +207,9 @@ func TestValidate(t *testing.T) {
 		General:  General{TransitionMs: 1},
 		Logging:  Logging{Level: "info"},
 		Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
-		GestureBindings: []GestureBinding{
-			{Gesture: "swipe_left", Selector: Selector{Type: "all"}, Action: ActionPowerOff},
-		},
-		FingerBindings: []FingerBinding{
-			{Pattern: [5]int{0, 0, 0, 0, 0}, Selector: Selector{Type: "all"}, Action: ActionPowerSetColor, HSBK: hsbk0},
+		Bindings: []Binding{
+			{Gesture: GestureSwipeLeft, Selector: Selector{Type: "all"}, Action: ActionPowerOff},
+			{Pattern: &handClosed, Selector: Selector{Type: "all"}, Action: ActionPowerSetColor, HSBK: hsbk0},
 		},
 	}
 	assert.NoError(t, cfg0.Validate())
