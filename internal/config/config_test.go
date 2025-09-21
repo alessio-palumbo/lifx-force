@@ -84,7 +84,7 @@ func TestLoadConfig(t *testing.T) {
 		}
 	)
 
-	if err := createConfigFile(userCfg0, tempFilePathEdited); err != nil {
+	if err := writeConfigFile(userCfg0, tempFilePathEdited); err != nil {
 		t.Fatal(err)
 	}
 
@@ -120,7 +120,7 @@ func TestLoadConfig(t *testing.T) {
 	userCfg1.General.TransitionMs = -1
 	tempFilePathEditedInvalid := filepath.Join(tempDir, "config-edited-invalid.toml")
 
-	if err := createConfigFile(userCfg1, tempFilePathEditedInvalid); err != nil {
+	if err := writeConfigFile(userCfg1, tempFilePathEditedInvalid); err != nil {
 		t.Fatal(err)
 	}
 	got, err := LoadConfig(tempFilePathEditedInvalid)

@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -118,7 +119,7 @@ func LoadConfig(userConfigPath string) (*Config, error) {
 
 	// Create user config based on the default file, if it does not exists.
 	if _, err := os.Stat(userConfigPath); errors.Is(err, os.ErrNotExist) {
-		if err := createConfigFile(baseCfg, userConfigPath); err != nil {
+		if err := writeConfigFile(baseCfg, userConfigPath); err != nil {
 			return nil, err
 		}
 		return baseCfg, nil
@@ -136,6 +137,15 @@ func LoadConfig(userConfigPath string) (*Config, error) {
 	if err := baseCfg.Validate(); err != nil {
 		return nil, err
 	}
+
+	// Overwrite userCfg with merged config, if not matching.
+	// This useful during updates and when releases introduce new or updated fields.
+	if !reflect.DeepEqual(userCfg, baseCfg) {
+		if err := writeConfigFile(baseCfg, userConfigPath); err != nil {
+			slog.Info("Updating user config...")
+			return nil, err
+		}
+	}
 	return baseCfg, nil
 }
 
@@ -151,7 +161,7 @@ func newBaseConfig() *Config {
 	}
 }
 
-func createConfigFile(cfg *Config, path string) error {
+func writeConfigFile(cfg *Config, path string) error {
 	buf, err := toml.Marshal(cfg)
 	if err != nil {
 		return fmt.Errorf("failed to marshal defaults: %w", err)
