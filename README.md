@@ -46,35 +46,35 @@ transition_ms = 1          # defines the speed of the light transition defined b
 level = "info"             # one of: debug, info, warn, error
 file  = "lifx-force.log"   # leave empty for stdout
 
-[[gesture_bindings]]
+[[bindings]]
 gesture = "swipe_left"
 action  = "set_color"
-[gesture_bindings.selector]
+[bindings.selector]
 type = "serial"
 value = "d073d5000000"
-[gesture_bindings.hsbk]
+[bindings.hsbk]
 hue = 240
 saturation = 100
 brightness = 100
 
-[[gesture_bindings]]
+[[bindings]]
 gesture = "swipe_right"
 action  = "set_color"
-[gesture_bindings.selector]
+[bindings.selector]
 type = "serial"
 value = "d073d5000000"
-[gesture_bindings.hsbk]
+[bindings.hsbk]
 hue = 0
 saturation = 100
 brightness = 100
 
-[[finger_bindings]]
+[[bindings]]
 pattern = [1,1,1,1,1]
 action  = "power_on"
 [finger_bindings.selector]
 type = "all"
 
-[[finger_bindings]]
+[[bindings]]
 pattern = [0,0,0,0,0]
 action  = "power_off"
 [finger_bindings.selector]
@@ -85,8 +85,40 @@ type = "all"
 
 - [general]: Global settings.
 - [logging]: Controls the logging level and output file. Leave file empty for console output.
-- [[gesture_bindings]]: Map gestures detected by Fingertrack to actions on your devices.
-- [[finger_bindings]]: Map finger patterns to actions.
+- [[bindings]]: Map gestures or finger patterns detected by Fingertrack to actions on your devices.
+
+### Gestures
+
+Supported gestures are:
+
+- swipe_left
+- swipe_right
+- swipe_up
+- swipe_down
+
+Supported compound gestures are:
+
+- expand -> triggered when hands move apart from each other on the horizontal plane
+- contract -> triggered when hands move closer to each other on the horizontal plane
+- push_down -> triggered when both hands push downward
+- pull_up -> triggered when both hands rise upward
+
+### Patterns
+
+A pattern describes the state of fingers in a hand, from thumb to pinky, left to right,
+with 1 meaning extended and 0 meaning retracted.
+E.g.
+
+- [0,0,0,0,0] -> fist
+- [1,1,1,1,1] -> open hand
+
+### Action
+
+Supported actions are:
+
+- power_on
+- power_off
+- set_color -> requires at least one of the HSBK (Hue, Saturation, Brightness, Kelvin) to be set
 
 ### Selector
 
@@ -98,14 +130,6 @@ The accepted selector are:
 - group -> target devices with the given group label
 - location -> target devices with the given location label
 - serial -> target a device with the given serial (e.g., d073d5000000)
-
-### Action
-
-Supported actions are:
-
-- power_on
-- power_off
-- set_color -> requires at least one of the HSBK (Hue, Saturation, Brightness, Kelvin) to be set
 
 ## License
 

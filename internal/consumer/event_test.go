@@ -34,8 +34,7 @@ func TestConsumer(t *testing.T) {
 			{Serial: serial2, Label: label2, Group: group1, Location: location0},
 			{Serial: serial3, Label: label3, Group: group2, Location: location0},
 		}
-		swipeLeft  = "swipe_left"
-		swipeRight = "swipe_right"
+		openHand = config.FingerPattern{1, 1, 1, 1, 1}
 	)
 	testCases := map[string]struct {
 		cfg          *config.Config
@@ -45,7 +44,7 @@ func TestConsumer(t *testing.T) {
 		"gesture event with selector serial": {
 			cfg: &config.Config{
 				General: config.General{TransitionMs: defaultMs},
-				GestureBindings: []config.GestureBinding{
+				Bindings: []config.Binding{
 					{
 						Gesture:  config.GestureSwipeLeft,
 						Action:   "power_on",
@@ -53,7 +52,7 @@ func TestConsumer(t *testing.T) {
 					},
 				},
 			},
-			event: &Event{Hands: []Hand{{Gesture: &swipeLeft}}},
+			event: &Event{Hands: []Hand{{Gesture: config.GestureSwipeLeft}}},
 			wantMessages: map[device.Serial][]*protocol.Message{
 				serial0: {messages.SetPowerOn()},
 			},
@@ -61,15 +60,15 @@ func TestConsumer(t *testing.T) {
 		"gesture event with all target": {
 			cfg: &config.Config{
 				General: config.General{TransitionMs: defaultMs},
-				GestureBindings: []config.GestureBinding{
+				Bindings: []config.Binding{
 					{
-						Gesture:  config.GestureSwipeRight,
+						Gesture:  config.GestureSwipeLeft,
 						Action:   "power_on",
 						Selector: config.Selector{Type: config.SelectorTypeAll},
 					},
 				},
 			},
-			event: &Event{Hands: []Hand{{Gesture: &swipeRight}}},
+			event: &Event{Hands: []Hand{{Gesture: config.GestureSwipeLeft}}},
 			wantMessages: map[device.Serial][]*protocol.Message{
 				serial0: {messages.SetPowerOn()},
 				serial1: {messages.SetPowerOn()},
@@ -80,7 +79,7 @@ func TestConsumer(t *testing.T) {
 		"gesture event with label target": {
 			cfg: &config.Config{
 				General: config.General{TransitionMs: defaultMs},
-				GestureBindings: []config.GestureBinding{
+				Bindings: []config.Binding{
 					{
 						Gesture:  config.GestureSwipeLeft,
 						Action:   "power_off",
@@ -88,7 +87,7 @@ func TestConsumer(t *testing.T) {
 					},
 				},
 			},
-			event: &Event{Hands: []Hand{{Gesture: &swipeLeft}}},
+			event: &Event{Hands: []Hand{{Gesture: config.GestureSwipeLeft}}},
 			wantMessages: map[device.Serial][]*protocol.Message{
 				serial0: {messages.SetPowerOff()},
 			},
@@ -96,7 +95,7 @@ func TestConsumer(t *testing.T) {
 		"gesture event with group target": {
 			cfg: &config.Config{
 				General: config.General{TransitionMs: defaultMs},
-				GestureBindings: []config.GestureBinding{
+				Bindings: []config.Binding{
 					{
 						Gesture:  config.GestureSwipeLeft,
 						Action:   "power_off",
@@ -104,7 +103,7 @@ func TestConsumer(t *testing.T) {
 					},
 				},
 			},
-			event: &Event{Hands: []Hand{{Gesture: &swipeLeft}}},
+			event: &Event{Hands: []Hand{{Gesture: config.GestureSwipeLeft}}},
 			wantMessages: map[device.Serial][]*protocol.Message{
 				serial1: {messages.SetPowerOff()},
 				serial2: {messages.SetPowerOff()},
@@ -113,7 +112,7 @@ func TestConsumer(t *testing.T) {
 		"gesture event with location target": {
 			cfg: &config.Config{
 				General: config.General{TransitionMs: defaultMs},
-				GestureBindings: []config.GestureBinding{
+				Bindings: []config.Binding{
 					{
 						Gesture:  config.GestureSwipeLeft,
 						Action:   "power_on",
@@ -121,7 +120,7 @@ func TestConsumer(t *testing.T) {
 					},
 				},
 			},
-			event: &Event{Hands: []Hand{{Gesture: &swipeLeft}}},
+			event: &Event{Hands: []Hand{{Gesture: config.GestureSwipeLeft}}},
 			wantMessages: map[device.Serial][]*protocol.Message{
 				serial1: {messages.SetPowerOn()},
 				serial2: {messages.SetPowerOn()},
@@ -131,9 +130,9 @@ func TestConsumer(t *testing.T) {
 		"finger event with selector serial": {
 			cfg: &config.Config{
 				General: config.General{TransitionMs: defaultMs},
-				FingerBindings: []config.FingerBinding{
+				Bindings: []config.Binding{
 					{
-						Pattern:  config.FingerPattern{1, 1, 1, 1, 1},
+						Pattern:  &openHand,
 						Action:   "power_on",
 						Selector: config.Selector{Type: config.SelectorTypeSerial, Serial: serial0},
 					},
@@ -147,9 +146,9 @@ func TestConsumer(t *testing.T) {
 		"finger event with all target": {
 			cfg: &config.Config{
 				General: config.General{TransitionMs: defaultMs},
-				FingerBindings: []config.FingerBinding{
+				Bindings: []config.Binding{
 					{
-						Pattern:  config.FingerPattern{1, 1, 1, 1, 1},
+						Pattern:  &openHand,
 						Action:   "power_on",
 						Selector: config.Selector{Type: config.SelectorTypeAll},
 					},
@@ -166,9 +165,9 @@ func TestConsumer(t *testing.T) {
 		"finger event with label target": {
 			cfg: &config.Config{
 				General: config.General{TransitionMs: defaultMs},
-				FingerBindings: []config.FingerBinding{
+				Bindings: []config.Binding{
 					{
-						Pattern:  config.FingerPattern{1, 1, 1, 1, 1},
+						Pattern:  &openHand,
 						Action:   "power_off",
 						Selector: config.Selector{Type: config.SelectorTypeLabel, Value: label0},
 					},
@@ -182,9 +181,9 @@ func TestConsumer(t *testing.T) {
 		"finger event with group target": {
 			cfg: &config.Config{
 				General: config.General{TransitionMs: defaultMs},
-				FingerBindings: []config.FingerBinding{
+				Bindings: []config.Binding{
 					{
-						Pattern:  config.FingerPattern{1, 1, 1, 1, 1},
+						Pattern:  &openHand,
 						Action:   "power_off",
 						Selector: config.Selector{Type: config.SelectorTypeGroup, Value: group1},
 					},
@@ -199,9 +198,9 @@ func TestConsumer(t *testing.T) {
 		"finger event with location target": {
 			cfg: &config.Config{
 				General: config.General{TransitionMs: defaultMs},
-				FingerBindings: []config.FingerBinding{
+				Bindings: []config.Binding{
 					{
-						Pattern:  config.FingerPattern{1, 1, 1, 1, 1},
+						Pattern:  &openHand,
 						Action:   "power_on",
 						Selector: config.Selector{Type: config.SelectorTypeLocation, Value: location0},
 					},
@@ -217,22 +216,20 @@ func TestConsumer(t *testing.T) {
 		"ignores fingers when gesture is available": {
 			cfg: &config.Config{
 				General: config.General{TransitionMs: defaultMs},
-				GestureBindings: []config.GestureBinding{
+				Bindings: []config.Binding{
 					{
 						Gesture:  config.GestureSwipeLeft,
 						Action:   "power_off",
 						Selector: config.Selector{Type: config.SelectorTypeLocation, Value: location0},
 					},
-				},
-				FingerBindings: []config.FingerBinding{
 					{
-						Pattern:  config.FingerPattern{1, 1, 1, 1, 1},
+						Pattern:  &openHand,
 						Action:   "power_on",
 						Selector: config.Selector{Type: config.SelectorTypeLocation, Value: location0},
 					},
 				},
 			},
-			event: &Event{Hands: []Hand{{Fingers: config.FingerPattern{1, 1, 1, 1, 1}, Gesture: &swipeLeft}}},
+			event: &Event{Hands: []Hand{{Fingers: config.FingerPattern{1, 1, 1, 1, 1}, Gesture: config.GestureSwipeLeft}}},
 			wantMessages: map[device.Serial][]*protocol.Message{
 				serial1: {messages.SetPowerOff()},
 				serial2: {messages.SetPowerOff()},
@@ -243,7 +240,71 @@ func TestConsumer(t *testing.T) {
 			cfg: &config.Config{
 				General: config.General{TransitionMs: defaultMs},
 			},
-			event: &Event{Hands: []Hand{{Fingers: config.FingerPattern{1, 1, 1, 1, 1}, Gesture: &swipeLeft}}},
+			event: &Event{Hands: []Hand{{Fingers: config.FingerPattern{1, 1, 1, 1, 1}, Gesture: config.GestureSwipeLeft}}},
+		},
+		"compound gesture event: expand": {
+			cfg: &config.Config{
+				General: config.General{TransitionMs: defaultMs},
+				Bindings: []config.Binding{
+					{
+						Gesture:  config.GestureExpand,
+						Action:   "power_off",
+						Selector: config.Selector{Type: config.SelectorTypeLabel, Value: label0},
+					},
+				},
+			},
+			event: &Event{Hands: []Hand{{Label: LeftHandLabel, Gesture: config.GestureSwipeLeft}, {Label: RightHandLabel, Gesture: config.GestureSwipeRight}}},
+			wantMessages: map[device.Serial][]*protocol.Message{
+				serial0: {messages.SetPowerOff()},
+			},
+		},
+		"compound gesture event: contract": {
+			cfg: &config.Config{
+				General: config.General{TransitionMs: defaultMs},
+				Bindings: []config.Binding{
+					{
+						Gesture:  config.GestureContract,
+						Action:   "power_off",
+						Selector: config.Selector{Type: config.SelectorTypeLabel, Value: label0},
+					},
+				},
+			},
+			event: &Event{Hands: []Hand{{Label: LeftHandLabel, Gesture: config.GestureSwipeRight}, {Label: RightHandLabel, Gesture: config.GestureSwipeLeft}}},
+			wantMessages: map[device.Serial][]*protocol.Message{
+				serial0: {messages.SetPowerOff()},
+			},
+		},
+		"compound gesture event: push_down": {
+			cfg: &config.Config{
+				General: config.General{TransitionMs: defaultMs},
+				Bindings: []config.Binding{
+					{
+						Gesture:  config.GesturePushDown,
+						Action:   "power_off",
+						Selector: config.Selector{Type: config.SelectorTypeLabel, Value: label0},
+					},
+				},
+			},
+			event: &Event{Hands: []Hand{{Label: LeftHandLabel, Gesture: config.GestureSwipeDown}, {Label: RightHandLabel, Gesture: config.GestureSwipeDown}}},
+			wantMessages: map[device.Serial][]*protocol.Message{
+				serial0: {messages.SetPowerOff()},
+			},
+		},
+		"compound gesture event: pull_up": {
+			cfg: &config.Config{
+				General: config.General{TransitionMs: defaultMs},
+				Bindings: []config.Binding{
+					{
+						Gesture:  config.GesturePullUp,
+						Action:   "power_off",
+						Selector: config.Selector{Type: config.SelectorTypeLabel, Value: label0},
+					},
+				},
+			},
+			event: &Event{Hands: []Hand{{Label: LeftHandLabel, Gesture: config.GestureSwipeUp}, {Label: RightHandLabel, Gesture: config.GestureSwipeUp}}},
+			wantMessages: map[device.Serial][]*protocol.Message{
+				serial0: {messages.SetPowerOff()},
+			},
 		},
 	}
 

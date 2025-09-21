@@ -15,6 +15,9 @@ func TestLoadConfig(t *testing.T) {
 		tempFilePathEdited = filepath.Join(tempDir, "config-edited.toml")
 		serial0, _         = device.SerialFromHex("d073d5000000")
 
+		handClosed = FingerPattern{0, 0, 0, 0, 0}
+		handOpen   = FingerPattern{1, 1, 1, 1, 1}
+
 		h0, h1    float64 = 240, 0
 		p0        float64 = 100
 		defaultMs         = 1
@@ -22,32 +25,58 @@ func TestLoadConfig(t *testing.T) {
 			General:  General{TransitionMs: 10},
 			Logging:  Logging{Level: "info", File: "lifx-force.log"},
 			Tracking: Tracking{FrameSkip: 1, BufferSize: 8, GestureThreshold: 0.3},
-			GestureBindings: []GestureBinding{
+			Bindings: []Binding{
 				{
-					Gesture:  "swipe_left",
+					Gesture:  GestureSwipeLeft,
 					Action:   "set_color",
 					Selector: Selector{Type: SelectorTypeSerial, Value: "d073d5000000", Serial: serial0},
-					HSBK: &HSBK{
-						Hue: &h0, Saturation: &p0, Brightness: &p0,
-					},
+					HSBK:     &HSBK{Hue: &h0, Saturation: &p0, Brightness: &p0},
 				},
 				{
-					Gesture:  "swipe_right",
+					Gesture:  GestureSwipeRight,
 					Action:   "set_color",
-					Selector: Selector{Type: SelectorTypeSerial, Value: "d073d5000000", Serial: serial0},
-					HSBK: &HSBK{
-						Hue: &h1, Saturation: &p0, Brightness: &p0,
-					},
+					Selector: Selector{Type: SelectorTypeLabel, Value: "lamp"},
+					HSBK:     &HSBK{Hue: &h1, Saturation: &p0, Brightness: &p0},
 				},
-			},
-			FingerBindings: []FingerBinding{
 				{
-					Pattern:  FingerPattern{1, 1, 1, 1, 1},
+					Gesture:  GestureSwipeUp,
+					Action:   "set_color",
+					Selector: Selector{Type: SelectorTypeLabel, Value: "desk"},
+					HSBK:     &HSBK{Hue: &h1, Saturation: &p0, Brightness: &p0},
+				},
+				{
+					Gesture:  GestureSwipeDown,
+					Action:   "set_color",
+					Selector: Selector{Type: SelectorTypeLabel, Value: "left bulb"},
+					HSBK:     &HSBK{Hue: &h1, Saturation: &p0, Brightness: &p0},
+				},
+				{
+					Gesture:  GestureExpand,
+					Action:   "power_off",
+					Selector: Selector{Type: SelectorTypeLabel, Value: "right_bulb"},
+				},
+				{
+					Gesture:  GestureContract,
+					Action:   "power_on",
+					Selector: Selector{Type: SelectorTypeLabel, Value: "right_bulb"},
+				},
+				{
+					Gesture:  GesturePushDown,
+					Action:   "power_off",
+					Selector: Selector{Type: SelectorTypeGroup, Value: "living room"},
+				},
+				{
+					Gesture:  GesturePullUp,
+					Action:   "power_on",
+					Selector: Selector{Type: SelectorTypeGroup, Value: "living room"},
+				},
+				{
+					Pattern:  &handOpen,
 					Action:   "power_on",
 					Selector: Selector{Type: SelectorTypeAll},
 				},
 				{
-					Pattern:  FingerPattern{0, 0, 0, 0, 0},
+					Pattern:  &handClosed,
 					Action:   "power_off",
 					Selector: Selector{Type: SelectorTypeAll},
 				},

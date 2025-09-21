@@ -11,10 +11,36 @@ import (
 	"github.com/alessio-palumbo/lifxprotocol-go/gen/protocol/enums"
 )
 
+var compoundGestures = map[config.Gesture]func(map[label]Hand) bool{
+	config.GestureExpand: func(hs map[label]Hand) bool {
+		return matchGesture(hs[LeftHandLabel], "swipe_left") &&
+			matchGesture(hs[RightHandLabel], "swipe_right")
+	},
+	config.GestureContract: func(hs map[label]Hand) bool {
+		return matchGesture(hs[LeftHandLabel], "swipe_right") &&
+			matchGesture(hs[RightHandLabel], "swipe_left")
+	},
+	config.GesturePushDown: func(hs map[label]Hand) bool {
+		return matchGesture(hs[LeftHandLabel], "swipe_down") &&
+			matchGesture(hs[RightHandLabel], "swipe_down")
+	},
+	config.GesturePullUp: func(hs map[label]Hand) bool {
+		return matchGesture(hs[LeftHandLabel], "swipe_up") &&
+			matchGesture(hs[RightHandLabel], "swipe_up")
+	},
+}
+
+type label string
+
+const (
+	LeftHandLabel  = "left"
+	RightHandLabel = "right"
+)
+
 type Hand struct {
-	Label   string               `json:"label"`
+	Label   label                `json:"label"`
 	Fingers config.FingerPattern `json:"fingers"`
-	Gesture *string              `json:"gesture"`
+	Gesture config.Gesture       `json:"gesture,omitempty"`
 }
 
 type Event struct {
@@ -37,25 +63,47 @@ type Consumer struct {
 }
 
 func New(cfg *config.Config, ctrl lanController, logger *slog.Logger) *Consumer {
+	gb, fb := initBindings(cfg, logger, ctrl.GetDevices())
 	return &Consumer{
 		cfg:             cfg,
 		ctrl:            ctrl,
 		logger:          logger,
-		fingerBindings:  initFingerBindings(cfg, ctrl.GetDevices()),
-		gestureBindings: initGestureBindings(cfg, ctrl.GetDevices()),
+		gestureBindings: gb,
+		fingerBindings:  fb,
 	}
 }
 
 func (c *Consumer) HandleEvent(event *Event) {
 	c.logger.Debug("processing event", slog.Any("event", event))
+
+	hs := make(map[label]Hand, len(event.Hands))
 	for _, h := range event.Hands {
-		if h.Gesture != nil && c.gestureBindings != nil {
-			if f, ok := c.gestureBindings[config.Gesture(*h.Gesture)]; ok {
+		hs[h.Label] = h
+	}
+
+	// Try compound gestures
+	for g, match := range compoundGestures {
+		if match(hs) {
+			if f, ok := c.gestureBindings[g]; ok {
+				c.logger.Debug("actioned compound gesture", slog.Any("gesture", g))
+				f(c.ctrl)
+				return
+			}
+			c.logger.Debug("unhandled compound gesture", slog.Any("gesture", g))
+			break
+		}
+	}
+
+	// Fallback: single-hand gestures
+	for _, h := range event.Hands {
+		if h.Gesture != "" && c.gestureBindings != nil {
+			if f, ok := c.gestureBindings[h.Gesture]; ok {
+				c.logger.Debug("actioned gesture", slog.Any("gesture", h.Gesture))
 				f(c.ctrl)
 				// Skip finger binding when gesture is available.
 				continue
 			}
-			c.logger.Warn("unhandled gesture", slog.String("gesture", *h.Gesture))
+			c.logger.Warn("unhandled gesture", slog.Any("hand", h.Label), slog.Any("gesture", h.Gesture))
 		}
 
 		if c.fingerBindings != nil {
@@ -63,35 +111,28 @@ func (c *Consumer) HandleEvent(event *Event) {
 				f(c.ctrl)
 				continue
 			}
-			c.logger.Warn("unhandled finger binding", slog.Any("fingers", h.Fingers))
+			c.logger.Warn("unhandled finger binding", slog.Any("hand", h.Label), slog.Any("fingers", h.Fingers))
 		}
 	}
 }
 
-func initFingerBindings(cfg *config.Config, devices []device.Device) map[config.FingerPattern]sendFunc {
-	m := make(map[config.FingerPattern]sendFunc)
-	for _, b := range cfg.FingerBindings {
-		if f := bindingSendFunc(cfg, devices, b.Action, b.HSBK, b.Selector); f != nil {
-			m[b.Pattern] = f
-		}
-	}
-	return m
-}
-
-func initGestureBindings(cfg *config.Config, devices []device.Device) map[config.Gesture]sendFunc {
-	m := make(map[config.Gesture]sendFunc)
-	for _, b := range cfg.GestureBindings {
-		switch b.Gesture {
-		case config.GestureSwipeLeft, config.GestureSwipeRight:
-		default:
+func initBindings(cfg *config.Config, logger *slog.Logger, devices []device.Device) (map[config.Gesture]sendFunc, map[config.FingerPattern]sendFunc) {
+	gb := make(map[config.Gesture]sendFunc)
+	fb := make(map[config.FingerPattern]sendFunc)
+	for _, b := range cfg.Bindings {
+		if b.Gesture != "" {
+			if f := bindingSendFunc(cfg, devices, b.Action, b.HSBK, b.Selector); f != nil {
+				gb[b.Gesture] = f
+				logger.Debug("registered gesture binding", slog.Any("gesture", b.Gesture))
+			}
 			continue
 		}
-
 		if f := bindingSendFunc(cfg, devices, b.Action, b.HSBK, b.Selector); f != nil {
-			m[b.Gesture] = f
+			fb[*b.Pattern] = f
+			logger.Debug("registered finger binding", slog.Any("fingers", b.Pattern))
 		}
 	}
-	return m
+	return gb, fb
 }
 
 func bindingSendFunc(cfg *config.Config, devices []device.Device, action config.Action, hsbk *config.HSBK, selector config.Selector) sendFunc {
@@ -146,4 +187,8 @@ func sendMultiple(ctrl lanController, serials []device.Serial, msg *protocol.Mes
 		}
 	}
 	return nil
+}
+
+func matchGesture(h Hand, g config.Gesture) bool {
+	return h.Gesture != "" && h.Gesture == g
 }

@@ -30,7 +30,26 @@ type Gesture string
 const (
 	GestureSwipeLeft  Gesture = "swipe_left"
 	GestureSwipeRight Gesture = "swipe_right"
+	GestureSwipeUp    Gesture = "swipe_up"
+	GestureSwipeDown  Gesture = "swipe_down"
+	// Compound gestures
+	GestureExpand   Gesture = "expand"
+	GestureContract Gesture = "contract"
+	GesturePullUp   Gesture = "pull_up"
+	GesturePushDown Gesture = "push_down"
 )
+
+var supportedGestures = map[Gesture]struct{}{
+	GestureSwipeLeft:  {},
+	GestureSwipeRight: {},
+	GestureSwipeUp:    {},
+	GestureSwipeDown:  {},
+	// Compound gestures
+	GestureExpand:   {},
+	GestureContract: {},
+	GesturePullUp:   {},
+	GesturePushDown: {},
+}
 
 type Action string
 
@@ -51,12 +70,10 @@ const (
 )
 
 type Config struct {
-	General  General  `toml:"general"`
-	Logging  Logging  `toml:"logging"`
-	Tracking Tracking `toml:"tracking"`
-
-	GestureBindings []GestureBinding `toml:"gesture_bindings"`
-	FingerBindings  []FingerBinding  `toml:"finger_bindings"`
+	General  General   `toml:"general"`
+	Logging  Logging   `toml:"logging"`
+	Tracking Tracking  `toml:"tracking"`
+	Bindings []Binding `toml:"bindings"`
 }
 
 type General struct {
@@ -74,18 +91,12 @@ type Logging struct {
 	File  string `toml:"file"`
 }
 
-type GestureBinding struct {
-	Gesture  Gesture  `toml:"gesture"`
-	Action   Action   `toml:"action"`
-	Selector Selector `toml:"selector"`
-	HSBK     *HSBK    `toml:"hsbk,omitempty"`
-}
-
-type FingerBinding struct {
-	Pattern  FingerPattern `toml:"pattern"`
-	Action   Action        `toml:"action"`
-	Selector Selector      `toml:"selector"`
-	HSBK     *HSBK         `toml:"hsbk,omitempty"`
+type Binding struct {
+	Gesture  Gesture        `toml:"gesture,omitempty"`
+	Pattern  *FingerPattern `toml:"pattern,omitempty"`
+	Action   Action         `toml:"action"`
+	Selector Selector       `toml:"selector"`
+	HSBK     *HSBK          `toml:"hsbk,omitempty"`
 }
 
 type HSBK struct {
