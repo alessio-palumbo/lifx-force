@@ -70,9 +70,9 @@ jobs:
           GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} \
           go build -o "$OUTPUT_DIR/$BIN_NAME" \
             -ldflags "-s -w \
-              -X github.com/alessio-palumbo/hikari/cmd/hikari/internal/version.Version=$VERSION \
-              -X github.com/alessio-palumbo/hikari/cmd/hikari/internal/version.Commit=$COMMIT \
-              -X github.com/alessio-palumbo/hikari/cmd/hikari/internal/version.BuildTime=$BUILD_TIME" \
+              -X github.com/alessio-palumbo/lifx-force/internal/version.Version=$VERSION \
+              -X github.com/alessio-palumbo/lifx-force/internal/version.Commit=$COMMIT \
+              -X github.com/alessio-palumbo/lifx-force/internal/version.BuildTime=$BUILD_TIME" \
             ./cmd/lifx-force
 
           echo "$VERSION" > "$OUTPUT_DIR/VERSION"

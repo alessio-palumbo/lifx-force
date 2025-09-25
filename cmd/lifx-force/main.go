@@ -17,12 +17,18 @@ import (
 	"github.com/alessio-palumbo/lifx-force/internal/consumer"
 	"github.com/alessio-palumbo/lifx-force/internal/logger"
 	"github.com/alessio-palumbo/lifx-force/internal/runtime"
+	"github.com/alessio-palumbo/lifx-force/internal/version"
 	"github.com/alessio-palumbo/lifxlan-go/pkg/controller"
 
 	_ "embed"
 )
 
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "--version" {
+		version.Print()
+		os.Exit(0)
+	}
+
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
