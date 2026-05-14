@@ -24,7 +24,7 @@ func TestLoadConfig(t *testing.T) {
 		userCfg0          = &Config{
 			General:  General{TransitionMs: 10},
 			Logging:  Logging{Level: "info", File: "lifx-force.log"},
-			Tracking: Tracking{FrameSkip: 1, BufferSize: 8, GestureThreshold: 0.3},
+			Tracking: Tracking{FrameSkip: 1, BufferSize: 8},
 			Bindings: []Binding{
 				{
 					Gesture:  GestureSwipeLeft,
@@ -97,7 +97,7 @@ func TestLoadConfig(t *testing.T) {
 			want: &Config{
 				General:  General{TransitionMs: defaultMs},
 				Logging:  Logging{Level: "info"},
-				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
+				Tracking: Tracking{FrameSkip: 1, BufferSize: 5},
 			},
 		},
 		"with user config": {

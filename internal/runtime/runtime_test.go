@@ -10,15 +10,15 @@ import (
 func TestArgsFromConfig(t *testing.T) {
 	cfg0 := &config.Config{
 		Tracking: config.Tracking{
-			FrameSkip:        1,
-			BufferSize:       5,
-			GestureThreshold: 0.1,
+			FrameSkip:  1,
+			BufferSize: 5,
+			Preview:    true,
 		},
 	}
 	want := []string{
 		"--frame-skip", "1",
 		"--buffer-size", "5",
-		"--gesture-threshold", "0.1",
+		"--preview", "landmarks",
 	}
 	assert.Equal(t, want, ArgsFromConfig(cfg0))
 }

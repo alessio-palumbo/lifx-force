@@ -38,11 +38,6 @@ func (t *Tracking) Validate() error {
 	if t.BufferSize <= 0 {
 		return fmt.Errorf("tracking.buffer_size must be > 0")
 	}
-	if t.GestureThreshold <= 0 {
-		return fmt.Errorf("tracking.gesture_threshold must be > 0.0")
-	} else if t.GestureThreshold > 1 {
-		return fmt.Errorf("tracking.gesture_threshold must be <= 1.0")
-	}
 	return nil
 }
 

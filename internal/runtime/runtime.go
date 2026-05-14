@@ -57,11 +57,14 @@ func EnsureFingertrackInstalled(logger *slog.Logger) (string, error) {
 
 // ArgsFromConfig parses the given Config and returns a list of Fingertrack's arguments.
 func ArgsFromConfig(cfg *config.Config) []string {
-	return []string{
+	args := []string{
 		"--frame-skip", fmt.Sprintf("%d", cfg.Tracking.FrameSkip),
 		"--buffer-size", fmt.Sprintf("%d", cfg.Tracking.BufferSize),
-		"--gesture-threshold", fmt.Sprintf("%.1f", cfg.Tracking.GestureThreshold),
 	}
+	if cfg.Tracking.Preview {
+		args = append(args, "--preview", "landmarks")
+	}
+	return args
 }
 
 func unzip(data io.ReaderAt, size int64, dest string) error {

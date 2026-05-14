@@ -47,27 +47,11 @@ func TestValidate(t *testing.T) {
 			},
 			wantErr: "tracking.buffer_size must be > 0",
 		},
-		"invalid tracking: gesture_threshold - too small": {
-			cfg: &Config{
-				General:  General{TransitionMs: 1},
-				Logging:  Logging{Level: "info"},
-				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0},
-			},
-			wantErr: "tracking.gesture_threshold must be > 0.0",
-		},
-		"invalid tracking: gesture_threshold - too large": {
-			cfg: &Config{
-				General:  General{TransitionMs: 1},
-				Logging:  Logging{Level: "info"},
-				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 1.2},
-			},
-			wantErr: "tracking.gesture_threshold must be <= 1.0",
-		},
 		"invalid gesture binding: gesture": {
 			cfg: &Config{
 				General:  General{TransitionMs: 1},
 				Logging:  Logging{Level: "info"},
-				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
+				Tracking: Tracking{FrameSkip: 1, BufferSize: 5},
 				Bindings: []Binding{
 					{Gesture: "swoop"},
 				},
@@ -78,7 +62,7 @@ func TestValidate(t *testing.T) {
 			cfg: &Config{
 				General:  General{TransitionMs: 1},
 				Logging:  Logging{Level: "info"},
-				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
+				Tracking: Tracking{FrameSkip: 1, BufferSize: 5},
 				Bindings: []Binding{
 					{Gesture: GestureSwipeLeft, Selector: Selector{Type: "serial"}},
 				},
@@ -89,7 +73,7 @@ func TestValidate(t *testing.T) {
 			cfg: &Config{
 				General:  General{TransitionMs: 1},
 				Logging:  Logging{Level: "info"},
-				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
+				Tracking: Tracking{FrameSkip: 1, BufferSize: 5},
 				Bindings: []Binding{
 					{Gesture: GestureSwipeLeft, Selector: Selector{Type: "all"}},
 				},
@@ -100,7 +84,7 @@ func TestValidate(t *testing.T) {
 			cfg: &Config{
 				General:  General{TransitionMs: 1},
 				Logging:  Logging{Level: "info"},
-				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
+				Tracking: Tracking{FrameSkip: 1, BufferSize: 5},
 				Bindings: []Binding{
 					{Gesture: GestureSwipeLeft, Selector: Selector{Type: "all"}, Action: "Unknown"},
 				},
@@ -111,7 +95,7 @@ func TestValidate(t *testing.T) {
 			cfg: &Config{
 				General:  General{TransitionMs: 1},
 				Logging:  Logging{Level: "info"},
-				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
+				Tracking: Tracking{FrameSkip: 1, BufferSize: 5},
 				Bindings: []Binding{
 					{Gesture: GestureSwipeLeft, Selector: Selector{Type: "all"}, Action: ActionPowerSetColor},
 				},
@@ -122,7 +106,7 @@ func TestValidate(t *testing.T) {
 			cfg: &Config{
 				General:  General{TransitionMs: 1},
 				Logging:  Logging{Level: "info"},
-				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
+				Tracking: Tracking{FrameSkip: 1, BufferSize: 5},
 				Bindings: []Binding{
 					{Gesture: GestureSwipeLeft, Selector: Selector{Type: "all"}, Action: ActionPowerSetColor, HSBK: &HSBK{}},
 				},
@@ -133,7 +117,7 @@ func TestValidate(t *testing.T) {
 			cfg: &Config{
 				General:  General{TransitionMs: 1},
 				Logging:  Logging{Level: "info"},
-				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
+				Tracking: Tracking{FrameSkip: 1, BufferSize: 5},
 				Bindings: []Binding{
 					{Pattern: &invalidPattern},
 				},
@@ -144,7 +128,7 @@ func TestValidate(t *testing.T) {
 			cfg: &Config{
 				General:  General{TransitionMs: 1},
 				Logging:  Logging{Level: "info"},
-				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
+				Tracking: Tracking{FrameSkip: 1, BufferSize: 5},
 				Bindings: []Binding{
 					{Pattern: &handClosed, Selector: Selector{Type: "serial"}},
 				},
@@ -155,7 +139,7 @@ func TestValidate(t *testing.T) {
 			cfg: &Config{
 				General:  General{TransitionMs: 1},
 				Logging:  Logging{Level: "info"},
-				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
+				Tracking: Tracking{FrameSkip: 1, BufferSize: 5},
 				Bindings: []Binding{
 					{Pattern: &handClosed, Selector: Selector{Type: "all"}},
 				},
@@ -166,7 +150,7 @@ func TestValidate(t *testing.T) {
 			cfg: &Config{
 				General:  General{TransitionMs: 1},
 				Logging:  Logging{Level: "info"},
-				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
+				Tracking: Tracking{FrameSkip: 1, BufferSize: 5},
 				Bindings: []Binding{
 					{Pattern: &handClosed, Selector: Selector{Type: "all"}, Action: "Unknown"},
 				},
@@ -177,7 +161,7 @@ func TestValidate(t *testing.T) {
 			cfg: &Config{
 				General:  General{TransitionMs: 1},
 				Logging:  Logging{Level: "info"},
-				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
+				Tracking: Tracking{FrameSkip: 1, BufferSize: 5},
 				Bindings: []Binding{
 					{Pattern: &handClosed, Selector: Selector{Type: "all"}, Action: ActionPowerSetColor},
 				},
@@ -188,7 +172,7 @@ func TestValidate(t *testing.T) {
 			cfg: &Config{
 				General:  General{TransitionMs: 1},
 				Logging:  Logging{Level: "info"},
-				Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
+				Tracking: Tracking{FrameSkip: 1, BufferSize: 5},
 				Bindings: []Binding{
 					{Pattern: &handClosed, Selector: Selector{Type: "all"}, Action: ActionPowerSetColor, HSBK: &HSBK{}},
 				},
@@ -206,7 +190,7 @@ func TestValidate(t *testing.T) {
 	cfg0 := &Config{
 		General:  General{TransitionMs: 1},
 		Logging:  Logging{Level: "info"},
-		Tracking: Tracking{FrameSkip: 1, BufferSize: 5, GestureThreshold: 0.1},
+		Tracking: Tracking{FrameSkip: 1, BufferSize: 5},
 		Bindings: []Binding{
 			{Gesture: GestureSwipeLeft, Selector: Selector{Type: "all"}, Action: ActionPowerOff},
 			{Pattern: &handClosed, Selector: Selector{Type: "all"}, Action: ActionPowerSetColor, HSBK: hsbk0},

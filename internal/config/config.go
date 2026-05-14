@@ -82,9 +82,9 @@ type General struct {
 }
 
 type Tracking struct {
-	FrameSkip        int     `toml:"frame_skip"`
-	BufferSize       int     `toml:"buffer_size"`
-	GestureThreshold float64 `toml:"gesture_threshold"`
+	FrameSkip  int  `toml:"frame_skip"`
+	BufferSize int  `toml:"buffer_size"`
+	Preview    bool `toml:"preview"`
 }
 
 type Logging struct {
@@ -154,9 +154,8 @@ func newBaseConfig() *Config {
 		General: General{TransitionMs: defaultTransitionMs},
 		Logging: Logging{Level: defaultLogLevel},
 		Tracking: Tracking{
-			FrameSkip:        defaultFrameSkip,
-			BufferSize:       defaultBufferSize,
-			GestureThreshold: defaultGestureThreshold,
+			FrameSkip:  defaultFrameSkip,
+			BufferSize: defaultBufferSize,
 		},
 	}
 }
